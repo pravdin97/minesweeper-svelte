@@ -1,58 +1,49 @@
 <script lang="ts">
-  import { IMap,revealCells } from "../logic/logic";
-
-  export let flaggedKeys: Set<string>;
-  export let failedBombKey: string | null;
-  export let map: IMap;
-  export let revealedKeys: Set<string>;
   export let key: string;
-
-  function onClick() {
-    if (failedBombKey !== null) {
-      return;
-    }
-    if (flaggedKeys.has(key)) {
-      return;
-    }
-    revealCells(map, revealedKeys, flaggedKeys, failedBombKey, key);
-    update();
-  };
+  export let onClick: () => void;
+  export let onContextMenu: (arg0: MouseEvent) => void;
+  export let map: Map<string, string | number>;
+  export let failedBombKey: string | null;
+  export let revealedKeys = new Set<string>();
+  export let flaggedKeys = new Set<string>();
 
   let disabled = false;
   let textContent = '';
-  let color = '';
   let backgroundColor = '';
+  let color = 'black';
 
-  function getButtonProps(value: number | string | undefined) {
-    if (value === undefined) {
-    } else if (value === 1) {
-      textContent = '1';
-      color = 'blue';
-    } else if (value === 2) {
-      textContent = '2';
-      color = 'green';
-    } else if (value >= 3) {
-      textContent = value.toString();
-      color = 'red';
-    } else {
-      console.log('value: ', value)
-      throw Error('should never happen');
-    }
-  }
+  $: bgColor = backgroundColor ?
+    backgroundColor :
+    disabled ?
+      'rgba(239, 239, 239, 0.3)' :
+      'rgb(239, 239, 239)';
 
-  function update() {
+  $: {
     const value = map.get(key);
-  
+
     if (failedBombKey !== null && value === 'bomb') {
       disabled = true;
       textContent = '💣️';
+
       if (failedBombKey === key) {
         backgroundColor = 'red';
       }
     } else if (revealedKeys.has(key)) {
       disabled = true;
-  
-      getButtonProps(value);
+
+      if (value === undefined) {
+      } else if (value === 1) {
+        textContent = '1';
+        color = 'blue';
+      } else if (value === 2) {
+        textContent = '2';
+        color = 'green';
+      } else if (value >= 3) {
+        textContent = value.toString();
+        color = 'red';
+      } else {
+        throw Error('should never happen');
+      }
     } else if (flaggedKeys.has(key)) {
       textContent = '🚩️';
     }
@@ -62,10 +53,11 @@
 <button
   class="cell"
   on:click={onClick}
-  disabled={disabled}
-  style="color: {color}; background-color: {backgroundColor}"
+  on:contextmenu={onContextMenu}
+  {disabled}
+  style="color: {color}; background-color: {bgColor};"
 >
-  {textContent}
+{textContent}
 </button>
 
 <style>
